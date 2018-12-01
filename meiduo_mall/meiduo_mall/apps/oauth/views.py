@@ -61,7 +61,7 @@ class OauthView(CreateAPIView):
             return Response({'message': '缺少code值'}, status=400)
 
         # 通过code值获取token, 实例QQ对象
-        qq = OAuthQQ(client_id=QQ_CLIENT_ID, client_secret=QQ_CLIENT_SECRET, redirect_uri=QQ_REDIRECT_URI, state='/')
+        qq = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET, redirect_uri=settings.QQ_REDIRECT_URI, state='/')
 
         # 调用get_access_token方法获取token值
         access_token = qq.get_access_token(code=AuthCode)
