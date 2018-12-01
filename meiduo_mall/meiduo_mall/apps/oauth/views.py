@@ -15,10 +15,6 @@ from users.utils import merge_cart_cookie_to_redis
 class meidddou():
     pass
 
-def meiduo():
-
-    pass
-
 class OauthLoginViewQQ(APIView):
     """
         构造qq登录的跳转链接
