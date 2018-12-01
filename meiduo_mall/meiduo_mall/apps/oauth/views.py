@@ -12,8 +12,7 @@ from django.conf import settings
 
 from users.utils import merge_cart_cookie_to_redis
 
-class bbb():
-    pass
+from .WBtool import OAuthWB
 
 class OauthLoginViewQQ(APIView):
     """
@@ -34,6 +33,34 @@ class OauthLoginViewQQ(APIView):
 
         # 构造qq登录页面的跳转链接
         login_url = qq.get_qq_url()
+
+        # 返回结果
+        return Response(
+            {
+            'login_url': login_url
+            }
+        )
+
+
+class OauthLoginViewWB(APIView):
+    """
+        构造微博登录的跳转链接
+
+    """
+    def get(self, request):
+
+        # 获取前端发送的参数/防止csrf攻击
+        state = request.query_params.get('next', None)
+
+        # 前端如果没有传递需要手动写入
+        if state is None:
+            state = '/'
+
+        # 初始化QuathWB对象
+        wb = OAuthWB(client_id=settings.WB_CLIENT_ID, client_key=settings.WB_CLIENT_SECRET, redirect_uri=settings.WB_REDIRECT_URI, state=state)
+
+        # 构造wb登录页面的跳转链接
+        login_url = wb.get_qq_url()
 
         # 返回结果
         return Response(

@@ -288,6 +288,12 @@ QQ_CLIENT_SECRET = 'c6ce949e04e12ecc909ae6a8b09b637c'
 QQ_REDIRECT_URI = 'http://www.meiduo.site:8080/oauth_callback.html'
 
 
+# 微博登录参数
+WB_CLIENT_ID = '3305669385'
+WB_CLIENT_SECRET = '5fcd3c9a504c32aa93904ac7f0e3ccf3'
+WB_REDIRECT_URI = 'http://www.meiduo.site:8080/sina_callback.html'  # 跳转美多页面
+
+
 # 邮箱服务器配置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.163.com'
