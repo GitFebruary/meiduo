@@ -9,13 +9,12 @@ from oauth.models import OAuthQQUser
 from oauth.serializers import OauthSerializers
 # from settings.dev import QQ_CLIENT_ID, QQ_CLIENT_SECRET, QQ_REDIRECT_URI
 from django.conf import settings
-
 from users.utils import merge_cart_cookie_to_redis
 
 
 class OauthLoginViewQQ(APIView):
     """
-        构造qq登录的跳转链接
+        构造qq登录的跳转链接,哈哈哈哈
 
     """
     def get(self, request):
