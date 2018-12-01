@@ -12,8 +12,6 @@ from django.conf import settings
 
 from users.utils import merge_cart_cookie_to_redis
 
-class meidddou():
-    pass
 
 class OauthLoginViewQQ(APIView):
     """
