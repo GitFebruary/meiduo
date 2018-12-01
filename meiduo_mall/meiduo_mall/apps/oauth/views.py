@@ -13,10 +13,6 @@ from django.conf import settings
 from users.utils import merge_cart_cookie_to_redis
 
 
-def meiduo():
-
-    pass
-
 class OauthLoginViewQQ(APIView):
     """
         构造qq登录的跳转链接
