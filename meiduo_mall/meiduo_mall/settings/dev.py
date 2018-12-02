@@ -197,6 +197,14 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    # 保存购物车缓存配置
+    "image_code": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1/6",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
@@ -289,7 +297,7 @@ QQ_REDIRECT_URI = 'http://www.meiduo.site:8080/oauth_callback.html'
 
 
 # 微博登录参数
-WB_CLIENT_ID = '3305669385'
+WB_CLIENT_ID = '1286469498'
 WB_CLIENT_SECRET = '5fcd3c9a504c32aa93904ac7f0e3ccf3'
 WB_REDIRECT_URI = 'http://www.meiduo.site:8080/sina_callback.html'  # 跳转美多页面
 

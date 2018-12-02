@@ -1,10 +1,14 @@
 from random import randint
+
+from django.http import HttpResponse
 from django_redis import get_redis_connection
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework_jwt.views import ObtainJSONWebToken
 
+from meiduo_mall.utils.captcha.captcha import captcha
 from celery_tasks.sms.tasks import send_sms_code
 from goods.models import SKU
 from goods.serializers import SKUListSerializer
@@ -19,7 +23,7 @@ import base64, pickle
 # 发送短信视图
 from users.utils import merge_cart_cookie_to_redis
 
-
+# 发送短信验证码
 class SmsCodeView(APIView):
 
     def get(self, request, moblie):
@@ -35,6 +39,23 @@ class SmsCodeView(APIView):
         :param moblie:
         :return:
         """
+
+        # 获取前端用户输入的图片验证码和image_code_id
+        image_code = request.query_params.get('text')
+        image_code_id = request.query_params.get('image_code_id')
+
+        # 创建连接到redis对象
+        conn = get_redis_connection("image_code")
+        # 通过image——code——id获取redis中存储的图片验证码
+        image_code_redis = conn.get('image_code_%s' % image_code_id)
+
+        # 判断是否过了有效期
+        if not image_code_redis:
+            return Response({'error': "验证码失效"})
+        # 判断验证码是否一致
+        # 将前端输入的验证码与redis中的验证码进行比对, redis中获取的值为字节类型
+        if not image_code_redis.decode().lower() == image_code.lower():
+            return Response({'error': "验证码失效"})
 
         # 生成验证码
         sms_code = "%06d" % randint(0, 999999)
@@ -262,4 +283,51 @@ class UserLoginView(ObtainJSONWebToken):
         response = merge_cart_cookie_to_redis(request, response, user)
         # 返回数据
         return response
+
+
+# 生成图片验证码
+class ImgCodeView(APIView):
+
+    def get(self, request, image_code_id):
+        # 如果参数不存在，直接return
+        if not image_code_id:
+            return HttpResponse({"error": "参数缺失" })
+        # 调用captcha生成图片验证码
+        name, text, image = captcha.generate_captcha()
+        conn = get_redis_connection('image_code')
+        conn.setex('image_code_%s'%image_code_id, 60, text)
+        return HttpResponse(image)
+
+
+#　修改密码
+class ResetPassWord(APIView):
+
+    def put(self, request, user_id):
+
+        # 获取前段传递的参数
+        data = request.data
+        old_password = data['old_password']
+        password1 = data['password1']
+        password2 = data['password2']
+
+        # 获取旧密码
+        try:
+            user = User.objects.filter(user_id=user_id)
+        except:
+            return Response({'error': '查询用户错误'})
+        # 判断旧密码是否正确
+        # if user.check_password()
+
+
+
+
+
+
+
+
+
+
+
+
+
 

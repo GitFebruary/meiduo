@@ -98,7 +98,7 @@ var vm = new Vue({
         //微博登录
         sina_login: function(){
             var next = this.get_query_string('next') || '/';
-            axios.get(this.host + '/oauth/wb/authorization/?next=' + next, {
+            axios.get(this.host + '/oauth/sina/authorization/?next=' + next, {
                     responseType: 'json',
                     withCredentials: true
                 })

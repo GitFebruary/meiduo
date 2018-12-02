@@ -29,4 +29,11 @@ urlpatterns = [
 
     # 保存用户浏览记录
     url(r'browse_histories/$', views.HistoriesView.as_view()),
+
+    # 生成图片验证码
+    url(r'^image_codes/(?P<image_code_id>.+)/$', views.ImgCodeView.as_view()),
+
+    # 修改密码
+    url(r'^users/(?P<user_id>.+)/password/$', views.ResetPassWord.as_view()),
+
 ]
