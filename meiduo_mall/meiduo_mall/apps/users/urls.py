@@ -36,4 +36,14 @@ urlpatterns = [
     # 修改密码
     url(r'^users/(?P<user_id>.+)/password/$', views.ResetPassWord.as_view()),
 
+    # 忘记密码1获取图片验证码
+    url(r'^accounts/(?P<username>.+)/sms/token/$', views.GetSmsView.as_view()),
+
+    # 忘记密码2发送短信验证
+    url(r'^sms_codes/$', views.SetCodeView.as_view()),
+
+    # 忘记密码3验证短信
+    url(r'^accounts/(?P<username>.+)/password/token/$', views.SetPassWord.as_view()),
+
+
 ]

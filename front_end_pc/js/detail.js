@@ -105,6 +105,37 @@ var vm = new Vue({
                     console.log(error.response.data);
                 })
         },
+
+        // 添加收藏
+        add_collect: function(){
+            axios.post(this.host+'/collect/', {
+                    sku_id: parseInt(this.sku_id),
+                    count: this.sku_count
+                }, {
+                    headers: {
+                        'Authorization': 'JWT ' + this.token
+                    },
+                    responseType: 'json',
+                    withCredentials: true
+                })
+                .then(response => {
+                    if ('error' in response.data) {
+                        alert('未登陆不许收藏');
+                    } else {
+                        alert('添加收藏成功');
+                        this.cart_total_count += response.data.count;
+                    }
+
+                })
+                .catch(error => {
+                    if ('non_field_errors' in error.response.data) {
+                        alert(error.response.data.non_field_errors[0]);
+                    } else {
+                        alert('未登陆不许收藏');
+                    }
+                    console.log(error.response.data);
+                })
+        },
         // 获取购物车数据
         get_cart: function(){
 

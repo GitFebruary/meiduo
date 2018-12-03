@@ -6,6 +6,7 @@ var vm = new Vue({
         user_id: sessionStorage.user_id || localStorage.user_id,
         token: sessionStorage.token || localStorage.token,
         cart: [],
+        collect: [],
         total_selected_count: 0,
         origin_input: 0 // 用于记录手动输入前的值
     },
@@ -57,8 +58,52 @@ var vm = new Vue({
             })
             .catch(error => {
                 console.log(error.response.data);
+            }),
+
+            // 获取收藏数据
+        axios.get(this.host+'/collect/', {
+                headers: {
+                    'Authorization': 'JWT ' + this.token
+                },
+                responseType: 'json',
+                withCredentials: true
+            })
+            .then(response => {
+                 if ('error' in response.data) {
+
+                    } else {
+                        this.collect = response.data;
+                        for(var i=0; i<this.cart.length; i++){
+                        this.cart[i].amount = (parseFloat(this.cart[i].price) * this.cart[i].count).toFixed(2);
+                }
+                    }
+
+            })
+            .catch(error => {
+                console.log(error.response.data);
             })
     },
+
+
+//     collect: function(){
+//     // 获取收藏数据
+//     axios.get(this.host+'/collect/', {
+//             headers: {
+//                 'Authorization': 'JWT ' + this.token
+//             },
+//             responseType: 'json',
+//             withCredentials: true
+//         })
+//         .then(response => {
+//             this.collect = response.data;
+//             for(var i=0; i<this.cart.length; i++){
+//                 this.cart[i].amount = (parseFloat(this.cart[i].price) * this.cart[i].count).toFixed(2);
+//             }
+//         })
+//         .catch(error => {
+//             console.log(error.response.data);
+//         })
+// },
     methods: {
         // 退出
         logout: function(){
@@ -100,6 +145,25 @@ var vm = new Vue({
         // 删除购物车数据
         on_delete: function(index){
             axios.delete(this.host+'/cart/', {
+                    data: {
+                        sku_id: this.cart[index].id
+                    },
+                    headers:{
+                        'Authorization': 'JWT ' + this.token
+                    },
+                    responseType: 'json',
+                    withCredentials: true
+                })
+                .then(response => {
+                    this.cart.splice(index, 1);
+                })
+                .catch(error => {
+                    console.log(error.response.data);
+                })
+        },
+        // 删除收藏数据
+        del: function(index){
+            axios.delete(this.host+'/collect/', {
                     data: {
                         sku_id: this.cart[index].id
                     },

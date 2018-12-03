@@ -39,24 +39,6 @@ class SmsCodeView(APIView):
         :param moblie:
         :return:
         """
-
-        # 获取前端用户输入的图片验证码和image_code_id
-        image_code = request.query_params.get('text')
-        image_code_id = request.query_params.get('image_code_id')
-
-        # 创建连接到redis对象
-        conn = get_redis_connection("image_code")
-        # 通过image——code——id获取redis中存储的图片验证码
-        image_code_redis = conn.get('image_code_%s' % image_code_id)
-
-        # 判断是否过了有效期
-        if not image_code_redis:
-            return Response({'error': "验证码失效"})
-        # 判断验证码是否一致
-        # 将前端输入的验证码与redis中的验证码进行比对, redis中获取的值为字节类型
-        if not image_code_redis.decode().lower() == image_code.lower():
-            return Response({'error': "验证码失效"})
-
         # 生成验证码
         sms_code = "%06d" % randint(0, 999999)
         print(sms_code)
@@ -83,6 +65,25 @@ class SmsCodeView(APIView):
         # # 获取发送短信对象
         # ccp = CCP()
         # ccp.send_template_sms(moblie, [sms_code, '5'], 1)
+
+
+        # 获取前端用户输入的图片验证码和image_code_id
+        image_code = request.query_params.get('text')
+        image_code_id = request.query_params.get('image_code_id')
+
+        # 创建连接到redis对象
+        conn = get_redis_connection("image_code")
+        # 通过image——code——id获取redis中存储的图片验证码
+        image_code_redis = conn.get('image_code_%s' % image_code_id)
+
+        # 判断是否过了有效期
+        if not image_code_redis:
+            return Response({'error': "验证码失效"})
+        # 判断验证码是否一致
+        # 将前端输入的验证码与redis中的验证码进行比对, redis中获取的值为字节类型
+        if not image_code_redis.decode().lower() == image_code.lower():
+            return Response({'error': "验证码失效"})
+
 
         # 异步发送短信
         send_sms_code.delay(moblie, sms_code)
@@ -280,7 +281,7 @@ class UserLoginView(ObtainJSONWebToken):
         if serializer.is_valid():
             user = serializer.object.get('user') or request.user
 
-        response = merge_cart_cookie_to_redis(request, response, user)
+            response = merge_cart_cookie_to_redis(request, response, user)
         # 返回数据
         return response
 
@@ -299,6 +300,130 @@ class ImgCodeView(APIView):
         return HttpResponse(image)
 
 
+# 忘记密码1获取图片验证码
+class GetSmsView(APIView):
+
+    def get(self, request, username):
+
+        # 查询用户名是否存在
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return Response({'error': '用户不存在'})
+        # 获取用户id和mobile
+        access_token = user.id
+        mobile = user.mobile
+
+        # 获取前端用户输入的图片验证码和image_code_id
+        image_code = request.query_params.get('text')
+        image_code_id = request.query_params.get('image_code_id')
+
+        # 创建连接到redis对象
+        conn = get_redis_connection("image_code")
+        # 通过image——code——id获取redis中存储的图片验证码
+        image_code_redis = conn.get('image_code_%s' % image_code_id)
+
+        # 判断是否过了有效期
+        if not image_code_redis:
+            return Response({'error': "验证码失效"})
+        # 判断验证码是否一致
+        # 将前端输入的验证码与redis中的验证码进行比对, redis中获取的值为字节类型
+        if not image_code_redis.decode().lower() == image_code.lower():
+            return Response({'error': "验证码失效"})
+
+
+        return Response({'access_token': access_token, 'mobile': mobile})
+
+
+# 忘记密码2发送短信验证码
+class SetCodeView(APIView):
+
+    def get(self, request):
+
+        """
+        思路分析:
+        01- 获取手机号, url获取
+        02- 生成短信验证码
+        03- 需要将生成的短信验证码与用户输入的短信验证码进行对比,并消除,所以需要保存到redis缓存中
+        04- 发送短信验证码
+        05- 返回数据
+        :param request:
+        :param moblie:
+        :return:
+        """
+
+        # 获取access_token
+        access_token = request.query_params.get('access_token')
+        # 通过access_token获取mobile
+        user = User.objects.get(id=access_token)
+        mobile = user.mobile
+        # 生成验证码
+        sms_code = "%06d" % randint(0, 999999)
+        print(sms_code)
+        # 创建连接到redis对象
+        conn = get_redis_connection("sms_code")
+
+        # 判断请求间隔是否在60秒之内
+        flag = conn.get("sms_code_flag_" + mobile)
+        if flag:
+            return Response({'massage': "发送过于频繁"})
+
+        # 保存到redis缓存中
+        # 生成管道对象
+        p = conn.pipeline()
+        p.setex("sms_code_" + mobile, 300, sms_code)
+        p.setex("sms_code_flag_" + mobile, 60, 123)
+        p.execute()
+
+        # # 保存验证码到redis缓存中
+        # conn.setex("sms_code_" + moblie, 300, sms_code)
+        # conn.setex("sms_code_flag_" + moblie, 60, 123)
+
+        # # 发送短信
+        # # 获取发送短信对象
+        # ccp = CCP()
+        # ccp.send_template_sms(moblie, [sms_code, '5'], 1)
+
+        # 异步发送短信
+        send_sms_code.delay(mobile, sms_code)
+
+        # 返回结果
+        return Response({'massage': 'OK'}, status=200)
+
+
+# 忘记密码3验证短信
+class SetPassWord(APIView):
+
+    def get(self, request, username):
+
+        # 查询用户名是否存在
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return Response({'error': '用户不存在'})
+        # 获取用户id和mobile
+        access_token = user.id
+        mobile = user.mobile
+        # 获取前端的sms_code
+        sms_code = request.query_params.get('sms_code')
+
+        # 创建连接到redis对象
+        conn = get_redis_connection("sms_code")
+        # 获取ｒｅｄｉｓ中的验证码
+        sms_code_redis = conn.get("sms_code_" + mobile)
+
+        # 判断是否过了有效期
+        if not sms_code_redis:
+            return Response({'error': "验证码失效"})
+        # 判断验证码是否一致
+        # 将前端输入的验证码与redis中的验证码进行比对, redis中获取的值为字节类型
+        if not sms_code_redis.decode() == sms_code:
+            return Response({'error': "验证码失效"})
+
+
+        return Response({'access_token': access_token, 'user_id': access_token})
+
+
 #　修改密码
 class ResetPassWord(APIView):
 
@@ -307,16 +432,54 @@ class ResetPassWord(APIView):
         # 获取前段传递的参数
         data = request.data
         old_password = data['old_password']
-        password1 = data['password1']
+        password = data['password']
         password2 = data['password2']
 
         # 获取旧密码
         try:
-            user = User.objects.filter(user_id=user_id)
+            user = User.objects.get(id=user_id)
         except:
             return Response({'error': '查询用户错误'})
         # 判断旧密码是否正确
-        # if user.check_password()
+        if not user.check_password(old_password):
+            return Response({'error': '密码错误'})
+        # 判断两次密码是否一致
+        if password != password2:
+            return Response({'error': '两次密码不一致'})
+        # 保存密码
+        user.set_password(password)
+        user.save()
+        return Response({'ok': 'ok'})
+
+    def post(self, request, user_id):
+        # 获取前段传递的参数
+        data = request.data
+        # access_token = data['access_token']
+        password = data['password']
+        password2 = data['password2']
+
+        # 修改密码
+        try:
+            user = User.objects.get(id=user_id)
+        except:
+            return Response({'error': '查询用户错误'})
+        # 判断两次密码是否一致
+        if password != password2:
+            return Response({'error': '两次密码不一致'})
+        # 保存密码
+        user.set_password(password)
+        user.save()
+        return Response({'ok': 'ok'})
+
+
+
+
+
+
+
+
+
+
 
 
 
