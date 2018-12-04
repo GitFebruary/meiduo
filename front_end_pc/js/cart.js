@@ -74,7 +74,7 @@ var vm = new Vue({
                     } else {
                         this.collect = response.data;
                         for(var i=0; i<this.cart.length; i++){
-                        this.cart[i].amount = (parseFloat(this.cart[i].price) * this.cart[i].count).toFixed(2);
+                        this.collect[i].amount = (parseFloat(this.collect[i].price) * this.collect[i].count).toFixed(2);
                 }
                     }
 
@@ -165,7 +165,7 @@ var vm = new Vue({
         del: function(index){
             axios.delete(this.host+'/collect/', {
                     data: {
-                        sku_id: this.cart[index].id
+                        sku_id: this.collect[index].id
                     },
                     headers:{
                         'Authorization': 'JWT ' + this.token
@@ -174,9 +174,51 @@ var vm = new Vue({
                     withCredentials: true
                 })
                 .then(response => {
-                    this.cart.splice(index, 1);
+                    this.collect.splice(index, 1);
                 })
                 .catch(error => {
+                    console.log(error.response.data);
+                })
+        },
+
+         // 移入购物车
+        move: function(index){
+            axios.delete(this.host+'/collect/', {
+                    data: {
+                        sku_id: this.collect[index].id
+                    },
+                    headers:{
+                        'Authorization': 'JWT ' + this.token
+                    },
+                    responseType: 'json',
+                    withCredentials: true
+                })
+                .then(response => {
+                    this.collect.splice(index, 1);
+                })
+                .catch(error => {
+                    console.log(error.response.data);
+                }),
+            axios.post(this.host+'/cart/', {
+                    sku_id: parseInt(this.sku_id),
+                    count: this.sku_count
+                }, {
+                    headers: {
+                        'Authorization': 'JWT ' + this.token
+                    },
+                    responseType: 'json',
+                    withCredentials: true
+                })
+                .then(response => {
+                    alert('添加购物车成功');
+                    this.cart_total_count += response.data.count;
+                })
+                .catch(error => {
+                    if ('non_field_errors' in error.response.data) {
+                        alert(error.response.data.non_field_errors[0]);
+                    } else {
+                        alert('添加购物车失败');
+                    }
                     console.log(error.response.data);
                 })
         },

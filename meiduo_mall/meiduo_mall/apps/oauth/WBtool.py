@@ -54,9 +54,9 @@ class OAuthWB(object):
 
             # 提取数据
             # access_token=FE04************************CCE2&expires_in=7776000&refresh_token=88E4************************BE14
-            data_byt = response._content
+            data_byt = response.text
             # 转化为字典
-            data = ast.literal_eval(data_byt.decode())
+            data = json.loads(data_byt)
 
         except:
             raise Exception('wb请求失败')
